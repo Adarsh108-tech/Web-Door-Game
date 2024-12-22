@@ -1,0 +1,122 @@
+[
+    {
+        "index" : 1,
+        "background_img " : "/assets/back1.jpg"
+    },
+    {
+        "index" : 2,
+        "background_img " : "/assets/back2.jpg"
+    },
+    {
+        "index" : 3,
+        "background_img " : "/assets/back3.jpg"
+    },
+    {
+        "index" : 4,
+        "background_img " : "/assets/back4.jpg"
+    },
+    {
+        "index" : 5,
+        "background_img " : "/assets/back5.jpg"
+    },
+    {
+        "index" : 6,
+        "background_img " : "/assets/back6.png"
+    },
+    {
+        "index" : 7,
+        "background_img " : "/assets/back7.gif"
+    },
+    {
+        "index" : 8,
+        "background_img " : "/assets/back8.avif"
+    },
+    {
+        "index" : 9,
+        "background_img " : "/assets/back9.gif"
+    },
+    {
+        "index" : 10,
+        "background_img " : "/assets/back10.png"
+    },
+    {
+        "index" : 11,
+        "background_img " : "/assets/back11.gif"
+    },
+    {
+        "index" : 12,
+        "background_img " : "/assets/back13.jpeg"
+    },
+    {
+        "index" : 13,
+        "background_img " : "/assets/back14.gif"
+    },
+    {
+        "index" : 14,
+        "background_img " : "/assets/back15.gif"
+    },
+    {
+        "index" : 15,
+        "background_img " : "/assets/back16.gif"
+    },
+    {
+        "index" : 16,
+        "background_img " : "/assets/back17.gif"
+    },
+    {
+        "index" : 17,
+        "background_img " : "/assets/back18.gif"
+    },
+    {
+        "index" : 18,
+        "background_img " : "/assets/back19.gif"
+    },
+    {
+        "index" : 19,
+        "background_img " : "/assets/back20.gif"
+    },
+    {
+        "index" : 20,
+        "background_img " : "/assets/back21.gif"
+    },
+    {
+        "index" : 21,
+        "background_img " : "/assets/back22.gif"
+    },
+    {
+        "index" : 22,
+        "background_img " : "/assets/back23.gif"
+    },
+    {
+        "index" : 23,
+        "background_img " : "/assets/back24.gif"
+    },
+    {
+        "index" : 24,
+        "background_img " : "/assets/back25.gif"
+    },
+    {
+        "index" : 25,
+        "background_img " : "/assets/back26.gif"
+    },
+    {
+        "index" : 26,
+        "background_img " : "/assets/back27.gif"
+    },
+    {
+        "index" : 27,
+        "background_img " : "/assets/back28.gif"
+    },
+    {
+        "index" : 28,
+        "background_img " : "/assets/back29.webp"
+    },
+    {
+        "index" : 29,
+        "background_img " : "/assets/back30.gif"
+    },
+    {
+        "index" : 30,
+        "background_img " : "/assets/back12.gif"
+    }
+]
