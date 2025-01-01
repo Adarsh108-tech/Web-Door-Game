@@ -15,7 +15,6 @@ export default function Home() {
   const { screenHeight, screenWidth } = useScreenSize();
 
   const [Player_sprite, setPlayerSprite] = useState(player_front);
-  const [direction, setDirection] = useState("");
   const [top, setTop] = useState(280); // Initial vertical position
   const [left, setLeft] = useState(490); // Initial horizontal position
   const [speed, setSpeed] = useState(15); // Movement speed
@@ -28,9 +27,8 @@ export default function Home() {
     { name: "Door4", top: screenHeight - 150, left: 550, change: +6, isNearby: false },
   ]);
 
-  const proximityThreshold = 50; // Distance in pixels to detect proximity
+  const proximityThreshold = 50;
 
-  // Update proximity to doors
   useEffect(() => {
     const updatedDoors = doors.map((door) => {
       const distance = Math.sqrt(
@@ -48,25 +46,21 @@ export default function Home() {
 
   // Movement functions
   const setUpDirection = () => {
-    setDirection("Up");
     setTop((prev) => Math.max(prev - speed, 0)); // Prevent moving out of bounds
     setPlayerSprite(player_back);
   };
 
   const setDownDirection = () => {
-    setDirection("Down");
     setTop((prev) => Math.min(prev + speed, window.innerHeight - 100)); // Prevent moving out of bounds
     setPlayerSprite(player_front);
   };
 
   const setRightDirection = () => {
-    setDirection("Right");
     setLeft((prev) => Math.min(prev + speed, window.innerWidth - 100)); // Prevent moving out of bounds
     setPlayerSprite(player_left);
   };
 
   const setLeftDirection = () => {
-    setDirection("Left");
     setLeft((prev) => Math.max(prev - speed, 0)); // Prevent moving out of bounds
     setPlayerSprite(player_right);
   };
@@ -124,6 +118,8 @@ export default function Home() {
           }}
           onClick={(e) => {
             if (door.isNearby) {
+              setTop(280);
+              setLeft(490);
               e.preventDefault();
               setCurrentPage((prev) => {
                 const newPage = prev + door.change;
