@@ -358,19 +358,91 @@ export default function Home() {
     return doors.find((d) => d.isNearby);
   }, [doors]);
 
-  // Emit movement updates to socket
+  // Native Vercel SSR API Sync
+  const apiSync = useCallback(
+    async (action: string, payload: Record<string, unknown> = {}) => {
+      try {
+        const res = await fetch("/api/game/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action,
+            roomId: room?.id || (payload.roomId as string) || "",
+            playerId,
+            ...payload,
+          }),
+        });
+        const data = await res.json();
+        if (data.error) {
+          setErrorBanner(data.error);
+          setTimeout(() => setErrorBanner(""), 4000);
+          return null;
+        }
+        if (data.room) {
+          setRoom(data.room);
+          if (data.room.tagBanner) {
+            setTagBanner(data.room.tagBanner);
+          }
+        }
+        if (data.playerId && !playerId) {
+          setPlayerId(data.playerId);
+        }
+        return data;
+      } catch (err: unknown) {
+        console.warn("API sync error:", err);
+        return null;
+      }
+    },
+    [room?.id, playerId]
+  );
+
+  // Continuous sync polling when running natively on Vercel without WebSockets
+  useEffect(() => {
+    if (!room?.id) return;
+    if (socketRef.current && socketRef.current.connected) return;
+
+    const pollIntervalMs = room.status === "playing" ? 250 : 800;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/game/sync?roomId=${room.id}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.room) {
+          setRoom(data.room);
+          if (data.room.tagBanner) {
+            setTagBanner(data.room.tagBanner);
+          }
+        }
+      } catch {
+        // ignore poll errors
+      }
+    }, pollIntervalMs);
+
+    return () => clearInterval(interval);
+  }, [room?.id, room?.status, isConnected]);
+
+  // Emit movement updates to socket or Vercel SSR API
   const broadcastMovement = useCallback(
     (newX: number, newY: number, newSprite: string) => {
-      if (socketRef.current && room?.status === "playing") {
+      if (room?.status !== "playing") return;
+      if (socketRef.current && socketRef.current.connected) {
         socketRef.current.emit("player_move", {
           x: newX,
           y: newY,
           sprite: newSprite,
           room: currentRoom,
         });
+      } else if (room?.id) {
+        apiSync("move", {
+          roomId: room.id,
+          x: newX,
+          y: newY,
+          sprite: newSprite,
+          roomIndex: currentRoom,
+        });
       }
     },
-    [room?.status, currentRoom]
+    [room?.status, room?.id, currentRoom, apiSync]
   );
 
   // Movement Functions (disabled when stunned!)
@@ -434,8 +506,15 @@ export default function Home() {
       setLeft(newX);
       setTop(newY);
 
-      if (socketRef.current) {
+      if (socketRef.current && socketRef.current.connected) {
         socketRef.current.emit("change_room", {
+          targetRoom: newPage,
+          x: newX,
+          y: newY,
+        });
+      } else if (room?.id) {
+        apiSync("change_room", {
+          roomId: room.id,
           targetRoom: newPage,
           x: newX,
           y: newY,
@@ -445,7 +524,7 @@ export default function Home() {
       setNotification(`🚪 Switched to Track Room ${newPage}`);
       setTimeout(() => setNotification(""), 1400);
     },
-    [isStunned, nearbyDoor, screenWidth, playerSize.w, playerSize.h, playableHeight]
+    [isStunned, nearbyDoor, screenWidth, playerSize.w, playerSize.h, playableHeight, room?.id, apiSync]
   );
 
   // Key Bindings
@@ -508,26 +587,54 @@ export default function Home() {
     return otherPlayersInRoom.some((p) => p.isCatcher);
   }, [isCatcher, otherPlayersInRoom]);
 
-  // Room Actions
-  const handleJoinOrCreate = (code?: string) => {
-    if (!socketRef.current || !socketRef.current.connected) {
-      setIsServerModalOpen(true);
+  // Room Actions (Hybrid: Uses WebSockets when connected, or Native Vercel SSR API Sync)
+  const handleJoinOrCreate = async (code?: string) => {
+    const targetRoomCode = code || roomCodeInput;
+    const userData = currentUser
+      ? {
+          userId: currentUser.id,
+          name: currentUser.name,
+          email: currentUser.email,
+          avatar: currentUser.avatar,
+        }
+      : {
+          name: `TrackRunner_${Math.floor(100 + Math.random() * 900)}`,
+        };
+
+    // 1. If persistent WebSocket server is connected, use Socket.io
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit("join_room", {
+        roomId: targetRoomCode ? targetRoomCode.trim().toUpperCase() : "",
+        user: userData,
+      });
       return;
     }
-    const targetRoomCode = code || roomCodeInput;
-    socketRef.current.emit("join_room", {
-      roomId: targetRoomCode ? targetRoomCode.trim().toUpperCase() : "",
-      user: currentUser
-        ? {
-            userId: currentUser.id,
-            name: currentUser.name,
-            email: currentUser.email,
-            avatar: currentUser.avatar,
-          }
-        : {
-            name: `TrackRunner_${Math.floor(100 + Math.random() * 900)}`,
-          },
+
+    // 2. Otherwise use native Vercel SSR API sync!
+    const effectivePid = playerId || "p_" + Math.random().toString(36).substring(2, 9);
+    setPlayerId(effectivePid);
+
+    const res = await fetch("/api/game/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "join",
+        roomId: targetRoomCode ? targetRoomCode.trim().toUpperCase() : "",
+        user: userData,
+        playerId: effectivePid,
+      }),
     });
+    const data = await res.json();
+    if (data.error) {
+      setErrorBanner(data.error);
+      setTimeout(() => setErrorBanner(""), 4000);
+      return;
+    }
+    if (data.room) {
+      setRoom(data.room);
+      setPlayerId(data.playerId);
+      setErrorBanner("");
+    }
   };
 
   const handleApplyCustomSocket = (url: string) => {
@@ -557,20 +664,36 @@ export default function Home() {
   };
 
   const handleToggleReady = () => {
-    if (socketRef.current) socketRef.current.emit("toggle_ready");
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit("toggle_ready");
+    } else {
+      apiSync("toggle_ready");
+    }
   };
 
   const handleStartGame = () => {
-    if (socketRef.current) socketRef.current.emit("start_game");
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit("start_game");
+    } else {
+      apiSync("start_game");
+    }
   };
 
   const handleLeaveRoom = () => {
-    if (socketRef.current) socketRef.current.emit("leave_room");
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit("leave_room");
+    } else {
+      apiSync("leave");
+    }
     setRoom(null);
   };
 
   const handlePlayAgain = () => {
-    if (socketRef.current) socketRef.current.emit("play_again");
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit("play_again");
+    } else {
+      apiSync("play_again");
+    }
   };
 
   const handleLogout = () => {
@@ -625,12 +748,12 @@ export default function Home() {
               type="button"
               onClick={() => setIsServerModalOpen(true)}
               className={`btn-3d py-1.5 px-3 rounded-xl text-[11px] font-arcade tracking-wider flex items-center gap-1.5 ${
-                isConnected ? "btn-3d-green" : "btn-3d-red animate-pulse"
+                isConnected ? "btn-3d-green" : "btn-3d-yellow"
               }`}
               title="Click to check Real-Time Server status"
             >
               <span className="w-2 h-2 rounded-full bg-white" />
-              {isConnected ? "SERVER LIVE" : "SERVER OFFLINE"}
+              {isConnected ? "WEBSOCKET LIVE" : "VERCEL SSR SYNC"}
             </button>
 
             {currentUser ? (
