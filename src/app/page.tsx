@@ -137,7 +137,8 @@ export default function Home() {
 
   // Initialize Socket.io Connection
   useEffect(() => {
-    const socket = io({
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "";
+    const socket = io(socketUrl || undefined, {
       transports: ["websocket", "polling"],
       autoConnect: true,
     });
