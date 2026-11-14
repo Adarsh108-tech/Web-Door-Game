@@ -12,6 +12,7 @@ import CatcherRadar from "@/components/CatcherRadar";
 import LeaderboardModal from "@/components/LeaderboardModal";
 import InviteShareModal from "@/components/InviteShareModal";
 import SubwayCityBackdrop from "@/components/SubwayCityBackdrop";
+import ServerStatusModal from "@/components/ServerStatusModal";
 import {
   Play,
   Share2,
@@ -57,6 +58,9 @@ export default function Home() {
 
   // Socket & Auth State
   const socketRef = useRef<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isServerModalOpen, setIsServerModalOpen] = useState<boolean>(false);
+  const [customSocketUrl, setCustomSocketUrl] = useState<string>("");
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -137,15 +141,32 @@ export default function Home() {
 
   // Initialize Socket.io Connection
   useEffect(() => {
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "";
+    let savedUrl = "";
+    if (typeof window !== "undefined") {
+      savedUrl = sessionStorage.getItem("custom_socket_url") || "";
+      if (savedUrl) setCustomSocketUrl(savedUrl);
+    }
+    const socketUrl = savedUrl || process.env.NEXT_PUBLIC_SOCKET_URL || "";
     const socket = io(socketUrl || undefined, {
       transports: ["websocket", "polling"],
       autoConnect: true,
+      reconnectionAttempts: 5,
+      timeout: 10000,
     });
     socketRef.current = socket;
 
     socket.on("connect", () => {
+      setIsConnected(true);
       setPlayerId(socket.id || "");
+    });
+
+    socket.on("disconnect", () => {
+      setIsConnected(false);
+    });
+
+    socket.on("connect_error", (err) => {
+      setIsConnected(false);
+      console.warn("Real-time socket connection error:", err.message);
     });
 
     socket.on("room_joined", ({ room, playerId }: { room: RoomState; playerId: string }) => {
@@ -489,22 +510,50 @@ export default function Home() {
 
   // Room Actions
   const handleJoinOrCreate = (code?: string) => {
-    const targetRoomCode = code || roomCodeInput;
-    if (socketRef.current) {
-      socketRef.current.emit("join_room", {
-        roomId: targetRoomCode ? targetRoomCode.trim().toUpperCase() : "",
-        user: currentUser
-          ? {
-              userId: currentUser.id,
-              name: currentUser.name,
-              email: currentUser.email,
-              avatar: currentUser.avatar,
-            }
-          : {
-              name: `TrackRunner_${Math.floor(100 + Math.random() * 900)}`,
-            },
-      });
+    if (!socketRef.current || !socketRef.current.connected) {
+      setIsServerModalOpen(true);
+      return;
     }
+    const targetRoomCode = code || roomCodeInput;
+    socketRef.current.emit("join_room", {
+      roomId: targetRoomCode ? targetRoomCode.trim().toUpperCase() : "",
+      user: currentUser
+        ? {
+            userId: currentUser.id,
+            name: currentUser.name,
+            email: currentUser.email,
+            avatar: currentUser.avatar,
+          }
+        : {
+            name: `TrackRunner_${Math.floor(100 + Math.random() * 900)}`,
+          },
+    });
+  };
+
+  const handleApplyCustomSocket = (url: string) => {
+    const cleanUrl = url.trim();
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("custom_socket_url", cleanUrl);
+    }
+    setCustomSocketUrl(cleanUrl);
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+    }
+    const newSocket = io(cleanUrl || undefined, {
+      transports: ["websocket", "polling"],
+      autoConnect: true,
+      reconnectionAttempts: 5,
+    });
+    socketRef.current = newSocket;
+    newSocket.on("connect", () => {
+      setIsConnected(true);
+      setPlayerId(newSocket.id || "");
+      setIsServerModalOpen(false);
+      setNotification("🟢 Connected to Real-Time Server!");
+      setTimeout(() => setNotification(""), 3000);
+    });
+    newSocket.on("disconnect", () => setIsConnected(false));
+    newSocket.on("connect_error", () => setIsConnected(false));
   };
 
   const handleToggleReady = () => {
@@ -571,6 +620,19 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Real-time Server Status Badge */}
+            <button
+              type="button"
+              onClick={() => setIsServerModalOpen(true)}
+              className={`btn-3d py-1.5 px-3 rounded-xl text-[11px] font-arcade tracking-wider flex items-center gap-1.5 ${
+                isConnected ? "btn-3d-green" : "btn-3d-red animate-pulse"
+              }`}
+              title="Click to check Real-Time Server status"
+            >
+              <span className="w-2 h-2 rounded-full bg-white" />
+              {isConnected ? "SERVER LIVE" : "SERVER OFFLINE"}
+            </button>
+
             {currentUser ? (
               <div className="recessed-well flex items-center gap-2 px-3 py-1.5 rounded-full">
                 <User className="w-4 h-4 text-[#16D466]" />
@@ -731,6 +793,15 @@ export default function Home() {
           onSuccess={(user) => {
             setCurrentUser(user as unknown as UserProfile);
           }}
+        />
+
+        {/* Server Status & Configuration Modal */}
+        <ServerStatusModal
+          isOpen={isServerModalOpen}
+          onClose={() => setIsServerModalOpen(false)}
+          isConnected={isConnected}
+          currentUrl={customSocketUrl || process.env.NEXT_PUBLIC_SOCKET_URL || (typeof window !== "undefined" ? window.location.origin : "")}
+          onConnect={handleApplyCustomSocket}
         />
       </div>
     );
