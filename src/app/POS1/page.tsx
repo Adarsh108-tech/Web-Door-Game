@@ -1,6 +1,8 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import useKeyPress from "../components/useKeyPress";
+import useScreenSize from "../functions/getScreenSize";
 
 export default function Home() {
   const player_right = "/assets/left_walk.gif";
@@ -8,10 +10,12 @@ export default function Home() {
   const player_front = "/assets/walk_front.gif";
   const player_back = "/assets/walk_up.gif";
 
-  const [Player_sprite, setPlayerSprite] = useState(player_front);
-  const [top, setTop] = useState(280); 
-  const [left, setLeft] = useState(490); 
-  const [speed, setSpeed] = useState(5); 
+  const { screenWidth, screenHeight } = useScreenSize();
+
+  const [playerSprite, setPlayerSprite] = useState(player_front);
+  const [top, setTop] = useState(280);
+  const [left, setLeft] = useState(490);
+  const [speed, setSpeed] = useState(5);
 
   const [doors, setDoors] = useState([
     { name: "Door1", top: 100, left: 150, link: "/", isNearby: false },
@@ -20,40 +24,40 @@ export default function Home() {
     { name: "Door4", top: 400, left: 800, link: "/", isNearby: false },
   ]);
 
-  const proximityThreshold = 50; 
+  const proximityThreshold = 60;
 
   useEffect(() => {
-    const updatedDoors = doors.map((door) => {
-      const distance = Math.sqrt(
-        Math.pow(door.top - top, 2) + Math.pow(door.left - left, 2)
-      );
+    setDoors((prevDoors) =>
+      prevDoors.map((door) => {
+        const distance = Math.sqrt(
+          Math.pow(door.top - top, 2) + Math.pow(door.left - left, 2)
+        );
 
-      return {
-        ...door,
-        isNearby: distance <= proximityThreshold,
-      };
-    });
-
-    setDoors(updatedDoors);
+        return {
+          ...door,
+          isNearby: distance <= proximityThreshold,
+        };
+      })
+    );
   }, [top, left]);
 
   const setUpDirection = () => {
-    setTop((prev) => Math.max(prev - speed, 0)); 
+    setTop((prev) => Math.max(prev - speed, 0));
     setPlayerSprite(player_back);
   };
 
   const setDownDirection = () => {
-    setTop((prev) => Math.min(prev + speed, window.innerHeight - 100)); 
+    setTop((prev) => Math.min(prev + speed, Math.max(0, screenHeight - 100)));
     setPlayerSprite(player_front);
   };
 
   const setRightDirection = () => {
-    setLeft((prev) => Math.min(prev + speed, window.innerWidth - 100)); 
+    setLeft((prev) => Math.min(prev + speed, Math.max(0, screenWidth - 100)));
     setPlayerSprite(player_left);
   };
-  
+
   const setLeftDirection = () => {
-    setLeft((prev) => Math.max(prev - speed, 0)); 
+    setLeft((prev) => Math.max(prev - speed, 0));
     setPlayerSprite(player_right);
   };
 
@@ -62,22 +66,23 @@ export default function Home() {
   };
 
   // Key bindings
-  useKeyPress("ArrowUp", setUpDirection);
-  useKeyPress("ArrowDown", setDownDirection);
-  useKeyPress("ArrowLeft", setLeftDirection);
-  useKeyPress("ArrowRight", setRightDirection);
+  useKeyPress(["ArrowUp", "KeyW", "w", "W"], setUpDirection);
+  useKeyPress(["ArrowDown", "KeyS", "s", "S"], setDownDirection);
+  useKeyPress(["ArrowLeft", "KeyA", "a", "A"], setLeftDirection);
+  useKeyPress(["ArrowRight", "KeyD", "d", "D"], setRightDirection);
   useKeyPress("Space", increaseSpeed);
 
   return (
-    <div className="h-screen w-screen bg-white relative flex justify-center items-center bg-[url('/assets/back2.jpg')] bg-cover bg-no-repeat">
+    <div className="h-screen w-screen bg-white relative flex justify-center items-center bg-[url('/assets/back2.jpg')] bg-cover bg-no-repeat overflow-hidden">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         id="player"
-        src={Player_sprite}
+        src={playerSprite}
         style={{
           top: `${top}px`,
           left: `${left}px`,
         }}
-        className="h-[5em] w-[5em] absolute duration-100"
+        className="h-[5em] w-[5em] absolute duration-100 select-none pointer-events-none"
         alt="Running Player"
       />
 
@@ -87,7 +92,7 @@ export default function Home() {
           href={door.isNearby ? door.link : "#"}
           className={`absolute text-black p-4 rounded-lg bg-[url('/assets/door_img.png')] bg-contain ${
             door.isNearby
-              ? "cursor-pointer text-purple-500 border-2 border-green-500"
+              ? "cursor-pointer text-purple-500 border-2 border-green-500 shadow-lg"
               : "cursor-default text-black"
           }`}
           style={{
@@ -101,7 +106,13 @@ export default function Home() {
               e.preventDefault();
             }
           }}
-        ></a>
+        >
+          {door.isNearby && (
+            <span className="text-xs bg-black/75 text-white px-2 py-0.5 rounded absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
+              Open
+            </span>
+          )}
+        </a>
       ))}
     </div>
   );

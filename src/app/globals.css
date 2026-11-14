@@ -1,4 +1,302 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700;800&family=Lilita+One&family=Titan+One&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --runner-green: #16D466;
+  --runner-green-hl: #4EF291;
+  --runner-green-sh: #0B8A40;
+
+  --transit-blue: #1E88FF;
+  --transit-blue-hl: #5CB0FF;
+  --transit-blue-sh: #0D52B5;
+
+  --hazard-yellow: #FFD21F;
+  --hazard-yellow-hl: #FFE875;
+  --hazard-yellow-sh: #C99200;
+
+  --catcher-coral: #FF4757;
+  --catcher-coral-hl: #FF7A85;
+  --catcher-coral-sh: #B81D2B;
+
+  --ice-cyan: #29D8FF;
+  --ice-cyan-sh: #0B82A8;
+
+  --ink-border: #111629;
+  --steel-panel: rgba(18, 26, 48, 0.94);
+  --steel-card: #1E2B4D;
+  --steel-well: #0D1324;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  background-color: #0b0f19;
+  font-family: 'Fredoka', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #FFFFFF;
+}
+
+/* Prevent callout & tap highlight on mobile game controls */
+button,
+a,
+input {
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
+}
+
+/* Typography Utility Classes */
+.font-arcade {
+  font-family: 'Lilita One', 'Titan One', cursive, sans-serif;
+  letter-spacing: 0.04em;
+}
+
+.text-stroke-ink {
+  -webkit-text-stroke: 2.5px #111629;
+  text-shadow: 0 4px 0 #111629, 0 6px 10px rgba(0, 0, 0, 0.6);
+}
+
+.text-stroke-sm {
+  -webkit-text-stroke: 1.5px #111629;
+  text-shadow: 0 2.5px 0 #111629;
+}
+
+.text-arcade-shadow {
+  text-shadow: 0 3px 0 #111629;
+}
+
+/* Hazard Stripe Patterns */
+.hazard-stripes {
+  background: repeating-linear-gradient(
+    -45deg,
+    #FFD21F,
+    #FFD21F 14px,
+    #171B26 14px,
+    #171B26 28px
+  );
+}
+
+.hazard-stripes-sm {
+  background: repeating-linear-gradient(
+    -45deg,
+    #FFD21F,
+    #FFD21F 8px,
+    #171B26 8px,
+    #171B26 16px
+  );
+}
+
+.hazard-stripes-red {
+  background: repeating-linear-gradient(
+    -45deg,
+    #FF4757,
+    #FF4757 10px,
+    #171B26 10px,
+    #171B26 20px
+  );
+}
+
+/* Arcade Tactile Panels */
+.arcade-panel {
+  background: var(--steel-panel);
+  border: 3px solid #111629;
+  border-radius: 24px;
+  box-shadow: 0 8px 0 #111629, 0 16px 32px rgba(0, 0, 0, 0.55), inset 0 2px 0 rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(14px);
+}
+
+.arcade-card {
+  background: var(--steel-card);
+  border: 3px solid #111629;
+  border-radius: 18px;
+  box-shadow: 0 5px 0 #111629, 0 8px 16px rgba(0, 0, 0, 0.4), inset 0 1.5px 0 rgba(255, 255, 255, 0.18);
+}
+
+.recessed-well {
+  background: var(--steel-well);
+  border: 3px solid #111629;
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.75), 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* 3D Push Button System */
+.btn-3d {
+  position: relative;
+  border: 3px solid #111629;
+  font-family: 'Lilita One', cursive, sans-serif;
+  letter-spacing: 0.03em;
+  transition: transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.1s ease, filter 0.1s ease;
+  user-select: none;
+}
+
+.btn-3d:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.btn-3d:active {
+  transform: translateY(4px) !important;
+}
+
+/* Green (Runner / Success) */
+.btn-3d-green {
+  background: linear-gradient(180deg, #4EF291 0%, #16D466 100%);
+  color: #FFFFFF;
+  box-shadow: 0 6px 0 #0B8A40, 0 9px 0 #111629, inset 0 3px 0 rgba(255, 255, 255, 0.45);
+}
+.btn-3d-green:active {
+  box-shadow: 0 2px 0 #0B8A40, 0 3px 0 #111629, inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Blue (Action / Transit) */
+.btn-3d-blue {
+  background: linear-gradient(180deg, #5CB0FF 0%, #1E88FF 100%);
+  color: #FFFFFF;
+  box-shadow: 0 6px 0 #0D52B5, 0 9px 0 #111629, inset 0 3px 0 rgba(255, 255, 255, 0.45);
+}
+.btn-3d-blue:active {
+  box-shadow: 0 2px 0 #0D52B5, 0 3px 0 #111629, inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Yellow (Hazard / Notice) */
+.btn-3d-yellow {
+  background: linear-gradient(180deg, #FFE875 0%, #FFD21F 100%);
+  color: #111629;
+  box-shadow: 0 6px 0 #C99200, 0 9px 0 #111629, inset 0 3px 0 rgba(255, 255, 255, 0.55);
+}
+.btn-3d-yellow:active {
+  box-shadow: 0 2px 0 #C99200, 0 3px 0 #111629, inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Coral Red (Catcher / Danger) */
+.btn-3d-red {
+  background: linear-gradient(180deg, #FF7A85 0%, #FF4757 100%);
+  color: #FFFFFF;
+  box-shadow: 0 6px 0 #B81D2B, 0 9px 0 #111629, inset 0 3px 0 rgba(255, 255, 255, 0.45);
+}
+.btn-3d-red:active {
+  box-shadow: 0 2px 0 #B81D2B, 0 3px 0 #111629, inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Neutral Gray (Cancel / Secondary) */
+.btn-3d-gray {
+  background: linear-gradient(180deg, #475569 0%, #334155 100%);
+  color: #FFFFFF;
+  box-shadow: 0 5px 0 #1E293B, 0 8px 0 #111629, inset 0 2px 0 rgba(255, 255, 255, 0.25);
+}
+.btn-3d-gray:active {
+  box-shadow: 0 2px 0 #1E293B, 0 3px 0 #111629, inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Transit Ticket Styling */
+.transit-ticket {
+  position: relative;
+  background: #1E2B4D;
+  border: 3px solid #111629;
+  border-radius: 18px;
+  box-shadow: 0 6px 0 #111629, 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Perforated ticket tear notches */
+.ticket-notch-left,
+.ticket-notch-right {
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 28px;
+  background: #0D1324;
+  border: 3px solid #111629;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+.ticket-notch-left {
+  left: -10px;
+  border-radius: 0 14px 14px 0;
+  border-left: none;
+}
+.ticket-notch-right {
+  right: -10px;
+  border-radius: 14px 0 0 14px;
+  border-right: none;
+}
+
+/* LED Station Departure Sign Styling */
+.led-board {
+  background: #080C16;
+  border: 3px solid #111629;
+  border-radius: 16px;
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.9), 0 4px 0 #111629;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Frosted Cyan Ice Vignette for 5s Freeze */
+@keyframes frostPulse {
+  0%, 100% {
+    box-shadow: inset 0 0 80px rgba(41, 216, 255, 0.8), inset 0 0 160px rgba(41, 216, 255, 0.45);
+    filter: brightness(1.05);
+  }
+  50% {
+    box-shadow: inset 0 0 120px rgba(41, 216, 255, 1), inset 0 0 220px rgba(41, 216, 255, 0.65);
+    filter: brightness(1.15);
+  }
+}
+
+.freeze-vignette {
+  animation: frostPulse 1.2s infinite ease-in-out;
+  pointer-events: none;
+}
+
+/* Catcher Alert Aura */
+@keyframes catcherRadarSweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.radar-sweep-beam {
+  transform-origin: center;
+  animation: catcherRadarSweep 3s linear infinite;
+}
+
+/* Signal Light Blink */
+@keyframes signalBlinkGreen {
+  0%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px #16D466);
+  }
+  50% {
+    opacity: 0.35;
+    filter: none;
+  }
+}
+
+@keyframes signalBlinkAmber {
+  0%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px #FFD21F);
+  }
+  50% {
+    opacity: 0.3;
+    filter: none;
+  }
+}
+
+.signal-green {
+  animation: signalBlinkGreen 2s infinite ease-in-out;
+}
+
+.signal-amber {
+  animation: signalBlinkAmber 1.4s infinite ease-in-out;
+}

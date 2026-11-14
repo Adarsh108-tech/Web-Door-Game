@@ -1,18 +1,31 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
-function useKeyPress(targetKey: string, handler: (event: KeyboardEvent) => void) {
-    useEffect(() => {
-        const keyHandler = (event: KeyboardEvent): void => {
-            if (event.key === targetKey) {
-                handler(event);
-            }
-        };
+function useKeyPress(
+  targetKey: string | string[],
+  handler: (event: KeyboardEvent) => void
+) {
+  const handlerRef = useRef(handler);
 
-        window.addEventListener("keydown", keyHandler as EventListener);
-        return () => {
-            window.removeEventListener("keydown", keyHandler as EventListener);
-        };
-    }, [targetKey, handler]); 
+  useEffect(() => {
+    handlerRef.current = handler;
+  }, [handler]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const keys = Array.isArray(targetKey) ? targetKey : [targetKey];
+
+    const keyHandler = (event: KeyboardEvent): void => {
+      if (keys.includes(event.key) || keys.includes(event.code)) {
+        handlerRef.current(event);
+      }
+    };
+
+    window.addEventListener("keydown", keyHandler);
+    return () => {
+      window.removeEventListener("keydown", keyHandler);
+    };
+  }, [targetKey]);
 }
 
 export default useKeyPress;
